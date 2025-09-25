@@ -261,38 +261,39 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = `INSERT INTO users (username, password, role) VALUES (?, ?, ?)`;
+        // PostgreSQL uses $1, $2, etc. for placeholders
+        const sql = `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`;
         
-        db.run(sql, [username, hashedPassword, role], function(err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ error: 'Username already exists.' });
-                }
-                console.error(err.message);
-                return res.status(500).json({ error: 'Failed to register user.' });
-            }
-            res.status(201).json({ message: 'User registered successfully!', userId: this.lastID });
-        });
+        // Use the async dbRun function
+        await dbRun(sql, [username, hashedPassword, role]);
+
+        // We can't get lastID directly like in sqlite, but we can confirm success
+        res.status(201).json({ message: 'User registered successfully!' });
+
     } catch (error) {
-        console.error(error);
+        console.error('Error during registration:', error);
+        // Check for unique constraint violation (code '23505' in PostgreSQL)
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Username already exists.' });
+        }
         res.status(500).json({ error: 'Server error during registration.' });
     }
 });
 
 // Login a user
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
         return res.status(400).json({ error: 'Please provide username and password.' });
     }
 
-    const sql = `SELECT * FROM users WHERE username = ?`;
-    db.get(sql, [username], async (err, user) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: 'Server error during login.' });
-        }
+    try {
+        // PostgreSQL uses $1 for the placeholder
+        const sql = `SELECT * FROM users WHERE username = $1`;
+        // Use the async dbGet function
+        const user = await dbGet(sql, [username]);
+
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
@@ -310,9 +311,14 @@ app.post('/api/login', (req, res) => {
             steam_id: user.steam_id
         };
 
+        // Omit password from the response
         const { password: _, ...userWithoutPassword } = user;
         res.json({ message: 'Login successful!', user: userWithoutPassword });
-    });
+
+    } catch (error) {
+        console.error('Error during login:', error);
+        res.status(500).json({ error: 'Server error during login.' });
+    }
 });
 
 // Logout a user
