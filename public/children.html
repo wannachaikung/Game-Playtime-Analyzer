@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการบุตรหลาน</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>จัดการบุตรหลาน</h1>
+            </div>
+            <div class="header-right">
+                <button id="theme-toggle-btn">☀️</button>
+                <a href="/" class="button-link">กลับหน้าแดชบอร์ด</a>
+            </div>
+        </header>
+
+        <main>
+            <h2>เพิ่มบุตรหลานใหม่</h2>
+            <form id="add-child-form">
+                <div class="form-group">
+                    <label for="child-name">ชื่อบุตรหลาน:</label>
+                    <input type="text" id="child-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="steam-id">Steam ID:</label>
+                    <input type="text" id="steam-id" required>
+                </div>
+                <div class="form-group">
+                    <label for="playtime-limit">กำหนดเวลาเล่น (ชั่วโมง/2 สัปดาห์):</label>
+                    <input type="number" id="playtime-limit" value="20" min="1" required>
+                </div>
+                <button type="submit">เพิ่มบุตรหลาน</button>
+                <div id="form-error" class="error"></div>
+            </form>
+
+            <h2>รายชื่อบุตรหลานของคุณ</h2>
+            <div id="children-loader" class="loader"></div>
+            <div id="children-list-error" class="error"></div>
+            <div class="table-container">
+                <table id="children-table">
+                    <thead>
+                        <tr>
+                            <th>ชื่อ</th>
+                            <th>Steam ID</th>
+                            <th>เวลาที่กำหนด (ชม./2 สัปดาห์)</th>
+                            <th>การกระทำ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Children data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Child Modal -->
+    <div id="edit-child-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>แก้ไขข้อมูลบุตรหลาน</h2>
+            <form id="edit-child-form">
+                <input type="hidden" id="edit-child-id">
+                <div class="form-group">
+                    <label for="edit-child-name">ชื่อบุตรหลาน:</label>
+                    <input type="text" id="edit-child-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-steam-id">Steam ID:</label>
+                    <input type="text" id="edit-steam-id" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-playtime-limit">กำหนดเวลาเล่น (ชั่วโมง/2 สัปดาห์):</label>
+                    <input type="number" id="edit-playtime-limit" min="1" required>
+                </div>
+                <button type="submit">บันทึกการเปลี่ยนแปลง</button>
+                <div id="edit-form-error" class="error"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="children.js"></script>
+</body>
+</html>

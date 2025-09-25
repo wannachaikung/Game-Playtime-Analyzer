@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Playtime Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="auth-container">
+            <div class="auth-header">
+                <h1>Game Playtime Analyzer</h1>
+                <p>เข้าสู่ระบบหรือสมัครสมาชิกเพื่อเริ่มต้น</p>
+            </div>
+            <!-- Login Form -->
+            <div id="login-view">
+                <h2>เข้าสู่ระบบ</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">ชื่อผู้ใช้:</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">รหัสผ่าน:</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit">เข้าสู่ระบบ</button>
+                    <p class="toggle-link">ยังไม่มีบัญชี? <a href="#" id="show-register">สมัครสมาชิก</a></p>
+                </form>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="register-view" style="display: none;">
+                <h2>สมัครสมาชิก</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-username">ชื่อผู้ใช้:</label>
+                        <input type="text" id="register-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">รหัสผ่าน:</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>คุณเป็น:</label>
+                        <select id="register-role" required>
+                            <option value="parent">ผู้ปกครอง (Parent)</option>
+                        </select>
+                    </div>
+                    <button type="submit">สมัครสมาชิก</button>
+                    <p class="toggle-link">มีบัญชีอยู่แล้ว? <a href="#" id="show-login">เข้าสู่ระบบ</a></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App View (hidden until login) -->
+        <div id="app-view" style="display: none;">
+            <header>
+                <div class="header-left">
+                    <h1>Game Playtime Analyzer</h1>
+                </div>
+                <div class="header-right">
+                    <div id="user-info"></div>
+                    <button id="theme-toggle-btn">☀️</button> <!-- Theme Toggle Button -->
+                    <button id="logout-btn">ออกจากระบบ</button>
+                </div>
+            </header>
+            
+            <div id="parent-dashboard">
+                <div class="dashboard-header">
+                    <h2>แดชบอร์ดผู้ปกครอง</h2>
+                    <a href="/children.html" class="button-link">จัดการบุตรหลาน</a>
+                </div>
+
+                <!-- User Settings Section -->
+                <div id="settings-section" class="settings-container">
+                    <h3>การตั้งค่าการแจ้งเตือน</h3>
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label for="discord-webhook-url">Discord Webhook URL:</label>
+                            <input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/...">
+                        </div>
+                        <button type="submit">บันทึก</button>
+                        <div id="settings-success" class="success"></div>
+                        <div id="settings-error" class="error"></div>
+                    </form>
+                </div>
+
+                <p>รายชื่อบุตรหลานที่ลงทะเบียนไว้ กด "ตรวจสอบ" เพื่อดูข้อมูลล่าสุด</p>
+                
+                <div id="parent-loader" class="loader" style="display: none;"></div>
+                <div id="parent-error" class="error"></div>
+
+                <div class="table-container">
+                    <table id="parent-children-table">
+                        <thead>
+                            <tr>
+                                <th>ชื่อบุตรหลาน</th>
+                                <th>Steam ID</th>
+                                <th>สถานะ</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Children list will be populated by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="parent-results" class="results-container"></div>
+            </div>
+
+        </div>
+        <div id="error-message" class="error"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

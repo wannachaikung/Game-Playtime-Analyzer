@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>Admin Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button id="theme-toggle-btn">☀️</button>
+                <button id="admin-logout-btn" class="button-link">ออกจากระบบ</button>
+            </div>
+        </header>
+
+        <main>
+            <h2>User Management</h2>
+            <div id="admin-loader" class="loader" style="display: none;"></div>
+            <div id="admin-error" class="error"></div>
+            <div class="table-container">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Discord Webhook</th>
+                            <th>Steam ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- User data will be populated here by admin.js -->
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>Create New User</h2>
+            <form id="create-user-form">
+                <div class="form-group">
+                    <label for="create-username">Username:</label>
+                    <input type="text" id="create-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-password">Password:</label>
+                    <input type="password" id="create-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-role">Role:</label>
+                    <select id="create-role" required>
+                        <option value="parent">Parent</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="create-email">Email (Optional):</label>
+                    <input type="email" id="create-email">
+                </div>
+                <div class="form-group">
+                    <label for="create-discord-webhook">Discord Webhook URL (Optional):</label>
+                    <input type="text" id="create-discord-webhook">
+                </div>
+                <button type="submit">Create User</button>
+                <div id="create-user-error" class="error"></div>
+            </form>
+
+            <h2>Edit User</h2>
+            <form id="edit-user-form" style="display: none;">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label for="edit-username">Username:</label>
+                    <input type="text" id="edit-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-role">Role:</label>
+                    <select id="edit-role" required>
+                        <option value="parent">Parent</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-email">Email (Optional):</label>
+                    <input type="email" id="edit-email">
+                </div>
+                <div class="form-group">
+                    <label for="edit-discord-webhook">Discord Webhook URL (Optional):</label>
+                    <input type="text" id="edit-discord-webhook">
+                </div>
+                <button type="submit">Save Changes</button>
+                <button type="button" id="cancel-edit">Cancel</button>
+                <div id="edit-user-error" class="error"></div>
+            </form>
+
+            <h2>Parent Activity Log</h2>
+            <div id="activity-loader" class="loader" style="display: none;"></div>
+            <div id="activity-error" class="error"></div>
+            <div class="table-container">
+                <table id="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Parent</th>
+                            <th>Checked Steam ID</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Activity data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html>
