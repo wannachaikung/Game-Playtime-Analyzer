@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         childrenTableBody.innerHTML = '';
 
         try {
-            const response = await fetch('/api/children');
+            const response = await fetch('/api/children', { credentials: 'include' });
             if (!response.ok) {
                 if (response.status === 401) {
                     window.location.href = '/'; // Redirect to login if not authenticated
@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/children', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // <-- ADD THIS LINE
                 body: JSON.stringify({
                     child_name: childName,
                     steam_id: steamId,
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch(`/api/children/${childId}`, {
                         method: 'DELETE',
+                        credentials: 'include',
                     });
                     const data = await response.json();
                     if (!response.ok) {
@@ -176,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/children/${childId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // <-- ADD THIS LINE
                 body: JSON.stringify({
                     child_name: childName,
                     steam_id: steamId,
