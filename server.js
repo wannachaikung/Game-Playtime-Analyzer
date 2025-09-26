@@ -6,7 +6,7 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 const path = require('path');
-const { db, initializeDatabase, dbGet, dbAll, dbRun, deleteChild, updateChild } = require('./database.js'); // Connect to the database
+const supabase = require('./supabaseClient.js'); // Connect to the database
 const bcrypt = require('bcryptjs');
 const cron = require('node-cron'); // Import node-cron
 
@@ -110,14 +110,24 @@ app.post('/api/check-playtime/:childId', isAuthenticated, async (req, res) => {
     const parentId = req.session.user.id;
 
     try {
-        // 1. Get child and parent data
-        const child = await dbGet('SELECT * FROM children WHERE id = ? AND parent_id = ?', [childId, parentId]);
-        if (!child) {
+        // 1. Get child and parent data from Supabase
+        const { data: child, error: childError } = await supabase
+            .from('children')
+            .select('*')
+            .match({ id: childId, parent_id: parentId })
+            .single();
+
+        if (childError || !child) {
             return res.status(404).json({ error: 'Child not found or you do not have permission.' });
         }
 
-        const parent = await dbGet('SELECT email, discord_webhook_url FROM users WHERE id = ?', [parentId]);
-        if (!parent) {
+        const { data: parent, error: parentError } = await supabase
+            .from('users')
+            .select('email, discord_webhook_url')
+            .eq('id', parentId)
+            .single();
+
+        if (parentError || !parent) {
             return res.status(404).json({ error: 'Parent user not found.' });
         }
 
@@ -133,10 +143,9 @@ app.post('/api/check-playtime/:childId', isAuthenticated, async (req, res) => {
         }
 
         const totalPlaytimeMinutes = data.games.reduce((acc, game) => acc + game.playtime_2weeks, 0);
-        const twoWeekLimitMinutes = child.playtime_limit_hours * 60 * 2; // Calculate limit for 2 weeks
+        const twoWeekLimitMinutes = child.playtime_limit_hours * 60 * 2;
 
         // 3. Check against limit and send notifications
-        // We compare the total playtime from the last 2 weeks against the limit for 2 weeks.
         if (totalPlaytimeMinutes > twoWeekLimitMinutes) {
             if (parent.email) {
                 await sendNotificationEmail(parent.email, totalPlaytimeMinutes, child.playtime_limit_hours);
@@ -146,14 +155,14 @@ app.post('/api/check-playtime/:childId', isAuthenticated, async (req, res) => {
             }
         }
 
-        // 4. Log activity and respond
-        db.run(`INSERT INTO activity_logs (user_id, checked_steam_id) VALUES (?, ?)`, [parentId, child.steam_id]);
+        // 4. Log activity to Supabase
+        await supabase.from('activity_logs').insert([{ user_id: parentId, checked_steam_id: child.steam_id }]);
 
         res.json({
             total_playtime_minutes: totalPlaytimeMinutes,
             total_playtime_hours: (totalPlaytimeMinutes / 60).toFixed(2),
             limit_hours: child.playtime_limit_hours,
-            is_over_limit: totalPlaytimeMinutes > twoWeekLimitMinutes, // Use the correct limit for the flag
+            is_over_limit: totalPlaytimeMinutes > twoWeekLimitMinutes,
             games: data.games.map(g => ({
                 name: g.name || 'Unknown Game',
                 playtime_2weeks: g.playtime_2weeks || 0,
@@ -264,21 +273,22 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        // PostgreSQL uses $1, $2, etc. for placeholders
-        const sql = `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`;
         
-        // Use the async dbRun function
-        await dbRun(sql, [username, hashedPassword, role]);
+        const { error } = await supabase
+            .from('users')
+            .insert([{ username, password: hashedPassword, role }]);
 
-        // We can't get lastID directly like in sqlite, but we can confirm success
+        if (error) {
+            if (error.code === '23505') { // Unique constraint violation
+                return res.status(409).json({ error: 'Username already exists.' });
+            }
+            throw error;
+        }
+
         res.status(201).json({ message: 'User registered successfully!' });
 
     } catch (error) {
         console.error('Error during registration:', error);
-        // Check for unique constraint violation (code '23505' in PostgreSQL)
-        if (error.code === '23505') {
-            return res.status(409).json({ error: 'Username already exists.' });
-        }
         res.status(500).json({ error: 'Server error during registration.' });
     }
 });
@@ -292,12 +302,13 @@ app.post('/api/login', async (req, res) => {
     }
 
     try {
-        // PostgreSQL uses $1 for the placeholder
-        const sql = `SELECT * FROM users WHERE username = $1`;
-        // Use the async dbGet function
-        const user = await dbGet(sql, [username]);
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
 
-        if (!user) {
+        if (error || !user) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
 
@@ -340,7 +351,14 @@ app.post('/api/logout', (req, res) => {
 // Get current user's settings
 app.get('/api/user/settings', isAuthenticated, async (req, res) => {
     try {
-        const user = await dbGet('SELECT email, discord_webhook_url FROM users WHERE id = ?', [req.session.user.id]);
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('email, discord_webhook_url')
+            .eq('id', req.session.user.id)
+            .single();
+
+        if (error) throw error;
+
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }
@@ -362,7 +380,13 @@ app.put('/api/user/settings', isAuthenticated, async (req, res) => {
     }
 
     try {
-        await dbRun('UPDATE users SET discord_webhook_url = ? WHERE id = ?', [discord_webhook_url || null, userId]);
+        const { error } = await supabase
+            .from('users')
+            .update({ discord_webhook_url: discord_webhook_url || null })
+            .eq('id', userId);
+
+        if (error) throw error;
+
         res.json({ message: 'Settings updated successfully!' });
     } catch (error) {
         console.error('Error updating user settings:', error);
@@ -494,7 +518,12 @@ app.get('/api/admin/activity', isAuthenticated, isAdmin, (req, res) => {
 // Get all children for the logged-in parent
 app.get('/api/children', isAuthenticated, async (req, res) => {
     try {
-        const children = await dbAll('SELECT * FROM children WHERE parent_id = ?', [req.session.user.id]);
+        const { data: children, error } = await supabase
+            .from('children')
+            .select('*')
+            .eq('parent_id', req.session.user.id);
+
+        if (error) throw error;
         res.json(children);
     } catch (error) {
         res.status(500).json({ error: 'Failed to retrieve children.' });
@@ -511,17 +540,20 @@ app.post('/api/children', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const result = await dbRun(
-            'INSERT INTO children (parent_id, child_name, steam_id, playtime_limit_hours) VALUES (?, ?, ?, ?)',
-            [parent_id, child_name, steam_id, playtime_limit_hours]
-        );
-        res.status(201).json({ message: 'Child added successfully!', childId: result.lastID });
-    } catch (error) {
-        console.error('!!! Error adding child to database:', error); // Log the full error
-        if (error.message.includes('UNIQUE constraint failed')) {
-            return res.status(409).json({ error: 'This Steam ID is already registered.' });
+        const { data, error } = await supabase
+            .from('children')
+            .insert([{ parent_id, child_name, steam_id, playtime_limit_hours }])
+            .select();
+
+        if (error) {
+            if (error.code === '23505') { // Unique constraint violation
+                return res.status(409).json({ error: 'This Steam ID is already registered.' });
+            }
+            throw error;
         }
-        // Send the specific DB error message to the client
+        res.status(201).json({ message: 'Child added successfully!', child: data[0] });
+    } catch (error) {
+        console.error('!!! Error adding child to database:', error);
         res.status(500).json({ error: `Failed to add child. Database error: ${error.message}` });
     }
 });
@@ -532,8 +564,14 @@ app.delete('/api/children/:id', isAuthenticated, async (req, res) => {
     const parentId = req.session.user.id;
 
     try {
-        const result = await deleteChild(childId, parentId);
-        if (result.changes === 0) {
+        const { error, count } = await supabase
+            .from('children')
+            .delete()
+            .match({ id: childId, parent_id: parentId });
+
+        if (error) throw error;
+
+        if (count === 0) {
             return res.status(404).json({ error: 'Child not found or you do not have permission.' });
         }
         res.json({ message: 'Child deleted successfully!' });
@@ -553,15 +591,23 @@ app.put('/api/children/:id', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const result = await updateChild(childId, parentId, { child_name, steam_id, playtime_limit_hours });
-        if (result.changes === 0) {
+        const { error, count } = await supabase
+            .from('children')
+            .update({ child_name, steam_id, playtime_limit_hours })
+            .match({ id: childId, parent_id: parentId });
+
+        if (error) {
+            if (error.code === '23505') {
+                return res.status(409).json({ error: 'This Steam ID is already registered to another child.' });
+            }
+            throw error;
+        }
+
+        if (count === 0) {
             return res.status(404).json({ error: 'Child not found or you do not have permission.' });
         }
         res.json({ message: 'Child updated successfully!' });
     } catch (error) {
-        if (error.message.includes('UNIQUE constraint failed')) {
-            return res.status(409).json({ error: 'This Steam ID is already registered to another child.' });
-        }
         res.status(500).json({ error: 'Failed to update child.' });
     }
 });
@@ -627,16 +673,7 @@ async function checkAllChildrenPlaytime() {
 }
 
 
-async function startServer() {
-    await initializeDatabase(); // Ensure DB is set up before starting the server
-    
-    // Schedule the job to run every 6 hours
-    cron.schedule('0 */6 * * *', checkAllChildrenPlaytime);
-    console.log('Scheduled automatic playtime check to run every 6 hours.');
 
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
     });
-}
-
-startServer();
