@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('/api/admin/users', { method: 'POST' });
+            const response = await fetch('/api/admin/users');
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to fetch users.');

@@ -396,15 +396,19 @@ app.put('/api/user/settings', isAuthenticated, async (req, res) => {
 
 
 // --- Admin API Endpoints ---
-app.post('/api/admin/users', isAuthenticated, isAdmin, (req, res) => {
-    const sql = `SELECT id, username, role, steam_id, email, discord_webhook_url FROM users`;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: 'Failed to retrieve users.' });
-        }
-        res.json(rows);
-    });
+// Admin: Get all users
+app.get('/api/admin/users', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, role, steam_id, email, discord_webhook_url');
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching users:', error.message);
+        res.status(500).json({ error: 'Failed to retrieve users.' });
+    }
 });
 
 // Admin: Create a new user
@@ -417,20 +421,27 @@ app.post('/api/admin/users/create', isAuthenticated, isAdmin, async (req, res) =
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = `INSERT INTO users (username, password, role, email, discord_webhook_url) VALUES (?, ?, ?, ?, ?)`;
         
-        db.run(sql, [username, hashedPassword, role, email || null, discord_webhook_url || null], function(err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ error: 'Username or Email already exists.' });
-                }
-                console.error(err.message);
-                return res.status(500).json({ error: 'Failed to create user.' });
+        const { data, error } = await supabase
+            .from('users')
+            .insert([{ 
+                username, 
+                password: hashedPassword, 
+                role, 
+                email: email || null, 
+                discord_webhook_url: discord_webhook_url || null 
+            }])
+            .select();
+
+        if (error) {
+            if (error.code === '23505') { // Unique constraint violation
+                return res.status(409).json({ error: 'Username or Email already exists.' });
             }
-            res.status(201).json({ message: 'User created successfully!', userId: this.lastID });
-        });
+            throw error;
+        }
+        res.status(201).json({ message: 'User created successfully!', userId: data[0].id });
     } catch (error) {
-        console.error(error);
+        console.error('Error creating user:', error);
         res.status(500).json({ error: 'Server error during user creation.' });
     }
 });
@@ -445,22 +456,29 @@ app.put('/api/admin/users/:id', isAuthenticated, isAdmin, async (req, res) => {
     }
 
     try {
-        const sql = `UPDATE users SET username = ?, role = ?, email = ?, discord_webhook_url = ? WHERE id = ?`;
-        db.run(sql, [username, role, email || null, discord_webhook_url || null, id], function(err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ error: 'Username or Email already exists.' });
-                }
-                console.error(err.message);
-                return res.status(500).json({ error: 'Failed to update user.' });
+        const { count, error } = await supabase
+            .from('users')
+            .update({ 
+                username, 
+                role, 
+                email: email || null, 
+                discord_webhook_url: discord_webhook_url || null 
+            })
+            .eq('id', id);
+
+        if (error) {
+            if (error.code === '23505') {
+                return res.status(409).json({ error: 'Username or Email already exists.' });
             }
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'User not found.' });
-            }
-            res.json({ message: 'User updated successfully!' });
-        });
+            throw error;
+        }
+
+        if (count === 0) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        res.json({ message: 'User updated successfully!' });
     } catch (error) {
-        console.error(error);
+        console.error('Error updating user:', error);
         res.status(500).json({ error: 'Server error during user update.' });
     }
 });
@@ -470,47 +488,51 @@ app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req, res) =>
     const { id } = req.params;
 
     try {
-        // Optional: Delete related records (children, playtime_logs, activity_logs)
-        // This depends on your foreign key constraints (ON DELETE CASCADE)
-        // If ON DELETE CASCADE is set, deleting user will automatically delete related records.
-        // Otherwise, you might need to delete them manually here.
+        const { count, error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', id);
 
-        const sql = `DELETE FROM users WHERE id = ?`;
-        db.run(sql, [id], function(err) {
-            if (err) {
-                console.error(err.message);
-                return res.status(500).json({ error: 'Failed to delete user.' });
-            }
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'User not found.' });
-            }
-            res.json({ message: 'User deleted successfully!' });
-        });
+        if (error) throw error;
+
+        if (count === 0) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        res.json({ message: 'User deleted successfully!' });
     } catch (error) {
-        console.error(error);
+        console.error('Error deleting user:', error);
         res.status(500).json({ error: 'Server error during user deletion.' });
     }
 });
 
-app.get('/api/admin/activity', isAuthenticated, isAdmin, (req, res) => {
-    const sql = `
-        SELECT 
-            a.id, 
-            u.username AS parent_username, 
-            a.checked_steam_id, 
-            a.timestamp 
-        FROM activity_logs a
-        JOIN users u ON a.user_id = u.id
-        ORDER BY a.timestamp DESC
-        LIMIT 50; -- Limit to the last 50 activities for performance
-    `;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: 'Failed to retrieve activity log.' });
-        }
-        res.json(rows);
-    });
+app.get('/api/admin/activity', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('activity_logs')
+            .select(`
+                id,
+                checked_steam_id,
+                timestamp,
+                users ( username )
+            `)
+            .order('timestamp', { ascending: false })
+            .limit(50);
+
+        if (error) throw error;
+
+        // Remap the data to match the old structure for the frontend
+        const formattedData = data.map(log => ({
+            id: log.id,
+            parent_username: log.users ? log.users.username : 'Unknown',
+            checked_steam_id: log.checked_steam_id,
+            timestamp: log.timestamp
+        }));
+
+        res.json(formattedData);
+    } catch (error) {
+        console.error('Error fetching activity log:', error.message);
+        res.status(500).json({ error: 'Failed to retrieve activity log.' });
+    }
 });
 
 // --- Children API Endpoints ---
