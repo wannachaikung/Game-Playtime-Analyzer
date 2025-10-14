@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (children.length === 0) {
             const row = childrenTableBody.insertRow();
             const cell = row.insertCell(0);
-            cell.colSpan = 4;
+            cell.colSpan = 5; // Adjusted for the new column
             cell.textContent = 'คุณยังไม่ได้เพิ่มข้อมูลบุตรหลาน';
             cell.style.textAlign = 'center';
             return;
@@ -77,6 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>
                     <button class="btn-edit" data-id="${child.id}" data-name="${child.child_name}" data-steamid="${child.steam_id}" data-limit="${child.playtime_limit_hours}">แก้ไข</button>
                     <button class="btn-danger btn-delete" data-id="${child.id}">ลบ</button>
+                </td>
+                <td>
+                    <a href="/index.html" class="button-link">ดูรายละเอียด</a>
                 </td>
             `;
         });

@@ -14,6 +14,7 @@
     --input-text-light: #2c3e50;
     --error-text-light: #e74c3c;
     --error-bg-light: #fdf2f2;
+    --table-row-hover-bg: #eef4f8; /* Added for consistency */
 
     /* Dark Theme - Modern and vibrant for younger users */
     --bg-dark: #111827;
@@ -28,6 +29,7 @@
     --input-text-dark: #f3f4f6;
     --error-text-dark: #f87171;
     --error-bg-dark: #7f1d1d;
+    --table-row-hover-bg-dark: #2c3a4b; /* Added for consistency */
 }
 
 body {
@@ -170,7 +172,7 @@ table tbody tr {
 }
 
 table tbody tr:hover {
-    background-color: var(--bg-light);
+    background-color: var(--table-row-hover-bg);
 }
 
 .game-icon {
@@ -348,7 +350,7 @@ body.dark-mode table th {
 }
 
 body.dark-mode table tbody tr:hover {
-    background-color: var(--bg-dark);
+    background-color: var(--table-row-hover-bg-dark);
 }
 
 body.dark-mode button, body.dark-mode .button-link {
@@ -527,4 +529,24 @@ body.dark-mode .close-btn:focus {
 
 .btn-edit:hover {
     background-color: #2980b9;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+.clickable-row:hover {
+    background-color: var(--table-row-hover-bg);
+}
+body.dark-mode .clickable-row:hover {
+    background-color: var(--table-row-hover-bg-dark);
+}
+
+/* Custom styles for game links in results */
+#parent-results a {
+    color: #007bff; /* A clear, standard blue for light mode */
+    text-decoration: underline;
+}
+
+.dark-mode #parent-results a {
+    color: #63a4ff; /* A lighter blue for dark mode */
 }

@@ -1,3 +1,5 @@
 node_modules
 .env
-gamedata.db
+gamedata.db.env 
+
+/generated/prisma

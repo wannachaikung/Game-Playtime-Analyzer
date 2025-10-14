@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน - Game Playtime Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: sans-serif;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 1rem;
+        }
+        .step {
+            margin-bottom: 1.5rem;
+        }
+        .step-image {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        .code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .alert {
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .home-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="home-link">&larr; กลับสู่หน้าหลัก</a>
+        <h1>คู่มือการใช้งาน</h1>
+
+        <section id="steam-id" class="step-section">
+            <h2>1. วิธีการหา Steam ID</h2>
+            <p>Steam ID คือหมายเลขประจำตัวบัญชี Steam ซึ่งจำเป็นสำหรับแอปของเราในการดึงข้อมูลเวลาเล่นเกม</p>
+            <div class="step">
+                <h4>ขั้นตอน: ค้นหาและคัดลอก Steam ID</h4>
+                <p>ไปที่หน้าโปรไฟล์ Steam ของคุณและคัดลอก Steam ID (ที่เป็นตัวเลขยาวๆ) จาก URL ตามภาพประกอบ หรือใช้บริการแปลง URL เป็น ID ที่เว็บไซต์ <a href="https://steamid.io/" target="_blank">steamid.io</a></p>
+                <img src="images/ขั้นตอนที่1.png" alt="วิธีการหา Steam ID" class="step-image">
+            </div>
+        </section>
+
+        <hr style="margin: 3rem 0;">
+
+        <section id="discord-webhook" class="step-section">
+            <h2>2. วิธีการสร้าง Discord Webhook</h2>
+            <p>ใช้สำหรับรับการแจ้งเตือนเวลาเล่นเกมเกินกำหนดผ่าน Discord</p>
+            <div class="step">
+                <h4>ขั้นตอนที่ 1: ไปที่หน้า Integrations</h4>
+                <p>ในแอป Discord คลิกขวาที่ไอคอนเซิร์ฟเวอร์ของคุณ แล้วเลือก <strong>Server Settings</strong> &rarr; <strong>Integrations</strong> และไปที่เมนู <strong>Webhooks</strong></p>
+                <img src="images/webhookขั้นตอนที่1.png" alt="ขั้นตอนที่ 1 ของ Webhook" class="step-image">
+            </div>
+            <div class="step">
+                <h4>ขั้นตอนที่ 2: สร้างและคัดลอก Webhook URL</h4>
+                <p>คลิก "New Webhook" จากนั้นตั้งค่าต่างๆ และกด "Copy Webhook URL" เพื่อนำ URL มาใช้งาน</p>
+                <img src="images/webhookขั้นตอนที่2-3.png" alt="ขั้นตอนที่ 2 และ 3 ของ Webhook" class="step-image">
+                <div class="alert alert-warning">
+                    <strong>ข้อควรระวัง:</strong> ห้ามเปิดเผย Webhook URL นี้ให้คนอื่นทราบ!
+                </div>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

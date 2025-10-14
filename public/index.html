@@ -70,7 +70,10 @@
             <div id="parent-dashboard">
                 <div class="dashboard-header">
                     <h2>แดชบอร์ดผู้ปกครอง</h2>
-                    <a href="/children.html" class="button-link">จัดการบุตรหลาน</a>
+                    <div>
+                        <a href="/guide.html" class="button-link">คู่มือการใช้งาน</a>
+                        <a href="#" onclick="window.location.href='/children.html'" class="button-link">จัดการบุตรหลาน</a>
+                    </div>
                 </div>
 
                 <!-- User Settings Section -->
@@ -78,7 +81,7 @@
                     <h3>การตั้งค่าการแจ้งเตือน</h3>
                     <form id="settings-form">
                         <div class="form-group">
-                            <label for="discord-webhook-url">Discord Webhook URL:</label>
+                            <label for="discord-webhook-url">Discord Webhook URL: <a href="guide.html#discord-webhook" class="help-link">(ดูวิธีทำ)</a></label>
                             <input type="text" id="discord-webhook-url" placeholder="https://discord.com/api/webhooks/...">
                         </div>
                         <button type="submit">บันทึก</button>

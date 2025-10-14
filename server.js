@@ -220,15 +220,13 @@ app.post('/api/check-playtime', async (req, res) => {
             }
         }
 
-        // --- Save Record and Log Activity ---
-        const timestamp = new Date().toISOString();
-        db.run(`INSERT INTO playtime_records (steam_id, total_playtime_minutes, timestamp) VALUES (?, ?, ?)`, 
-            [steamId, totalPlaytimeMinutes, timestamp]);
-
-        // Log the activity if a logged-in user made the request
+        // --- Log Activity ---
+        // Note: The 'playtime_records' table is deprecated in favor of the authenticated system.
+        // We only log activity if a user is logged in.
         if (req.session.user) {
-            db.run(`INSERT INTO activity_logs (user_id, checked_steam_id) VALUES (?, ?)`, 
-                [req.session.user.id, steamId]);
+            await supabase.from('activity_logs').insert([
+                { user_id: req.session.user.id, checked_steam_id: steamId }
+            ]);
         }
 
         res.json({
@@ -638,12 +636,20 @@ app.put('/api/children/:id', isAuthenticated, async (req, res) => {
 async function checkAllChildrenPlaytime() {
     console.log('Running scheduled job: Checking playtime for all children...');
     try {
-        const children = await dbAll('SELECT * FROM children');
+        // Get all children and their parent's notification settings in one query
+        const { data: children, error: childrenError } = await supabase
+            .from('children')
+            .select(`
+                *,
+                users ( email, discord_webhook_url )
+            `);
+
+        if (childrenError) throw childrenError;
 
         for (const child of children) {
-            const parent = await dbGet('SELECT email, discord_webhook_url FROM users WHERE id = ?', [child.parent_id]);
+            const parent = child.users;
             if (!parent) {
-                console.log(`Parent not found for child ID ${child.id}, skipping.`);
+                console.log(`Parent data not found for child ID ${child.id}, skipping.`);
                 continue;
             }
 
@@ -682,7 +688,14 @@ async function checkAllChildrenPlaytime() {
                     }
                     
                     // Update timestamp after sending notification
-                    await dbRun('UPDATE children SET last_notified_at = ? WHERE id = ?', [new Date().toISOString(), child.id]);
+                    const { error: updateError } = await supabase
+                        .from('children')
+                        .update({ last_notified_at: new Date().toISOString() })
+                        .eq('id', child.id);
+
+                    if (updateError) {
+                        console.error(`Failed to update last_notified_at for child ${child.id}:`, updateError);
+                    }
                 }
             } catch (apiError) {
                 console.error(`Error fetching Steam API for child ${child.child_name} (Steam ID: ${child.steam_id}):`, apiError.message);

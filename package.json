@@ -11,17 +11,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.17.1",
     "@supabase/supabase-js": "^2.58.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "discord.js": "^14.22.1",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.6",
-    "pg": "^8.16.3",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.17.1"
   }
 }

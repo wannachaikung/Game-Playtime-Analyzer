@@ -271,7 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const playtimeHours = (game.playtime_2weeks / 60).toFixed(2);
                     return `
                         <tr>
-                            <td>${iconUrl ? `<img src="${iconUrl}" class="game-icon" alt="${game.name || 'N/A'} icon">` : ''} ${game.name || 'N/A'}</td>
+                            <td>
+                                <a href="https://store.steampowered.com/app/${game.appid}" target="_blank" rel="noopener noreferrer" class="game-link">
+                                    ${iconUrl ? `<img src="${iconUrl}" class="game-icon" alt="${game.name || 'N/A'} icon">` : ''} 
+                                    ${game.name || 'N/A'}
+                                </a>
+                            </td>
                             <td>${game.playtime_2weeks || 0}</td>
                             <td>${playtimeHours || 0}</td>
                         </tr>
@@ -303,10 +308,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 children.forEach(child => {
                     const row = parentChildrenTableBody.insertRow();
                     row.dataset.childId = child.id;
+
+                    // Check for saved data immediately while building the row
+                    const savedDataJSON = localStorage.getItem(`playtimeResult_${child.id}`);
+                    let statusHTML = '-';
+
+                    if (savedDataJSON) {
+                        const data = JSON.parse(savedDataJSON);
+                        row.classList.add('clickable-row'); // Make row clickable
+                        if (data.is_over_limit) {
+                            statusHTML = `<span class="status-over">เกินกำหนด</span> (${data.total_playtime_hours} ชม.)`;
+                        } else {
+                            statusHTML = `<span class="status-ok">ปกติ</span> (${data.total_playtime_hours} ชม.)`;
+                        }
+                    }
+
                     row.innerHTML = `
                         <td>${child.child_name}</td>
                         <td>${child.steam_id}</td>
-                        <td class="status-cell">-</td>
+                        <td class="status-cell">${statusHTML}</td>
                         <td><button class="check-now-btn">ตรวจสอบ</button></td>
                     `;
                 });
@@ -318,8 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle clicks on "Check Now" buttons
+    // Handle clicks on table rows and "Check Now" buttons
     parentChildrenTableBody.addEventListener('click', async (e) => {
+        // Handle "Check Now" button click
         if (e.target.classList.contains('check-now-btn')) {
             const button = e.target;
             const row = button.closest('tr');
@@ -341,12 +362,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusCell.innerHTML = `<span class="status-ok">ปกติ</span> (${data.total_playtime_hours} ชม.)`;
                 }
                 renderResults(data); // Display detailed results
+                
+                // Save the successful result to localStorage
+                localStorage.setItem(`playtimeResult_${childId}`, JSON.stringify(data));
+                row.classList.add('clickable-row'); // Add clickable class after first successful check
 
             } catch (error) {
                 statusCell.textContent = 'Error';
                 parentError.textContent = error.message;
             } finally {
                 button.disabled = false;
+            }
+            return; // Stop further processing
+        }
+
+        // Handle click on the row itself to show saved results
+        const clickedRow = e.target.closest('tr.clickable-row');
+        if (clickedRow) {
+            const childId = clickedRow.dataset.childId;
+            const savedDataJSON = localStorage.getItem(`playtimeResult_${childId}`);
+            if (savedDataJSON) {
+                const data = JSON.parse(savedDataJSON);
+                renderResults(data);
             }
         }
     });
