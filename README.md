@@ -1,6 +1,7 @@
 # Game Playtime Analyzer
 
 โปรเจกต์สำหรับผู้ปกครองในการตรวจสอบชั่วโมงการเล่นเกมของบุตรหลานผ่าน Steam API พร้อมระบบแจ้งเตือนเมื่อเล่นเกินเวลาที่กำหนดผ่าน Discord Webhook และอีเมล
+
 Link:https://3000-firebase-gameplaytimeanalyzer-1760497843600.cluster-bg6uurscprhn6qxr6xwtrhvkf6.cloudworkstations.dev/
 
 ## ฟีเจอร์หลัก (Features)
